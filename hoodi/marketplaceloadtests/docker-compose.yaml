@@ -33,7 +33,7 @@ services:
             - op_node_data:/op-node
             - jwt_shared:/jwt
     op-geth-init:
-        image: golemnetwork/golembase-l3-op-geth:v1.101511.0-2.0-hoodi-marketplaceloadtests-aad3cf5b
+        image: golemnetwork/golembase-l3-op-geth:v1.101603.3-2.0-hoodi-marketplaceloadtests-ce11e4b4
         depends_on:
             op-init:
                 condition: service_completed_successfully
@@ -58,7 +58,7 @@ services:
         volumes:
             - op_geth_data:/geth
     op-geth:
-        image: golemnetwork/golembase-l3-op-geth:v1.101511.0-2.0-hoodi-marketplaceloadtests-aad3cf5b
+        image: golemnetwork/golembase-l3-op-geth:v1.101603.3-2.0-hoodi-marketplaceloadtests-ce11e4b4
         restart: unless-stopped
         stop_grace_period: 5m
         depends_on:
@@ -72,12 +72,12 @@ services:
             - --http.vhosts=*
             - --http.addr=0.0.0.0
             - --http.port=8545
-            - --http.api=admin,debug,eth,txpool,net,engine,web3,golembase,txpool
+            - --http.api=admin,debug,eth,txpool,net,engine,web3,golembase,txpool,arkiv
             - --ws
             - --ws.addr=0.0.0.0
             - --ws.port=8546
             - --ws.origins=*
-            - --ws.api=admin,debug,eth,txpool,net,engine,web3,golembase,txpool
+            - --ws.api=admin,debug,eth,txpool,net,engine,web3,golembase,txpool,arkiv
             - --syncmode=snap
             - --authrpc.vhosts=*
             - --authrpc.addr=0.0.0.0
@@ -86,7 +86,7 @@ services:
             - --usb=false
             - --state.scheme=hash
             - --nat=none
-            - --bootnodes=enode://0eef3268b10193ab14e6ba8284ce7aaad7736cee2698ec26afd2b93d6a8db3aac991f34153af6b05d26f76928485dd0b2ff32bc4d3dbcd6a49a79a5247b2c8d9@142.132.206.248:46012,enode://cfd02cc6acc36487b3b07471d879e207b356b9ca901fce1c2c4263efb89b560632ed0f2be7814da9726d764777d8d43fcf4b6effebaffb85c842f524f9b4d06e@78.46.85.197:46014,enode://b24d30056d64e7fcbb174b0534cfa1152992c6da004e7d5e6f4e494d30fadbcf3bf885e582fca2deec59e5c945c4e75f32df9f3deba8bc4c48b2eafbc40918cd@5.9.17.176:46016,enode://078beeee54c4f3b477776f03d9874ea399a7ec2402c332e34923fcad161648b5fc3ec1dddc209303f17a95fa89bba6896825b7c7796616e9afaa310ae9a9f51e@116.202.192.224:46018,enode://70d6e721821fd18809d79402800b9a36941e098c796310814a084a425aefe0933bce0bb3475dd0e438718f523c87ea27354c07403f1f5817aa12c3221710e9a4@116.202.193.109:46020
+            - --bootnodes=enode://635e8b7d103c3b4fa82c0d052a7a52e26798279224eac02818616d663a219b36865cfaf89140c1897893e88ef1dc2cecfa868a744ca73e046f6aa7eb0d970126@116.202.192.224:46012,enode://c04fce6e7f2ac9b603db79fa7c8811e67328ceb15d5ea7f112054fe475344afcfe1e33d53beb0e7577792d82d35099a21485cb17f7d486dee22ff65746c5a726@116.202.193.109:46014,enode://dfcc7b3af3c2b1804e92a56fec1138d342913c42fc1ee12fd35e6efcd6615fcb46215c3d93fa040e96dd9aabddb8b054310a1b9cc5c878a139999ac517866f6c@144.76.174.235:46016,enode://ba8f2b9c74f6e3e21415410a7f85dad63abcb872c4938c8ce3e0b83bdbd56646687009b1f29ae9bc8280a916dd7e534ba90f198ddfa68037ae696d93f0a843f9@78.46.85.197:46018,enode://887ed7e7d54c6b26e3aa2cd71f82d347b4a6a138453eb20d4e460f76e2bab3947d1397b28f36758ae7f58668f19474c313ff6e0567d65196629b7b7c090c1028@142.132.206.248:46020
             - --txpool.disable.non.golembase.transactions=true
         ports:
             - 8545:8545
@@ -95,7 +95,7 @@ services:
             - op_geth_data:/geth
             - jwt_shared:/jwt
     op-node:
-        image: golemnetwork/golembase-l3-op-node:v1.13.5-hoodi-marketplaceloadtests-e1122068
+        image: golemnetwork/golembase-l3-op-node:v1.16.0-hoodi-marketplaceloadtests-8720abe7
         restart: unless-stopped
         stop_grace_period: 5m
         depends_on:
@@ -116,7 +116,7 @@ services:
             - --rpc.port=9545
             - --p2p.nat=true
             - --p2p.ban.peers=false
-            - --p2p.bootnodes=enr:-KG4QH1ghnR-ka8n1cIR7vhkPceCJonMW9NYC94hVkqz2SVIc7fif1G-McOTtGHouzVjDJMb_M6NTHyz6OJdgrKGe1qGAZmV1ZiQgmlkgnY0gmlwhI6EzviHb3BzdGFja4eN8J-E4AEAiXNlY3AyNTZrMaED2gfF7GRxmT8-uDVf10OlSTjg2MDzR3xrLqku5NkqID-DdGNwgrO9g3VkcIKzvQ,enr:-KG4QBt4yTjZSZLF-y4WjiNj7iQt2xeTZfmcBx9Of-WxSlSlXJ0ncZytHnDxCPT3TwpaFIBhJ2EI_wz6eNi14vNL2ViGAZmV1aXsgmlkgnY0gmlwhE4uVcWHb3BzdGFja4eN8J-E4AEAiXNlY3AyNTZrMaECALKZyCsHhrgS2qV0FvM234G3aSss3RM0JL2qY2elC2ODdGNwgrO_g3VkcIKzvw,enr:-KG4QAXdIlMdzQWeeWfG3R6VDZNntr2_n5Y_-OzGkigGyhyILiZJycUupLmYOB_F4geezZiBFThRpwnr4dxnMPl-7D6GAZmV1apMgmlkgnY0gmlwhAUJEbCHb3BzdGFja4eN8J-E4AEAiXNlY3AyNTZrMaECx5noTwWbv3Td8wgbLSFhpuGcHcj__LIXWZf3CaAjuouDdGNwgrPBg3VkcIKzwQ,enr:-KG4QI1K3lanwiE5Ryc9idBUfojr20RSbJx5hGoRiPUdt3t3JM_UQhFn1G0goL0EgVwufV-geFtsuvs7l2nxoHjxgSKGAZmV1ZoYgmlkgnY0gmlwhHTKwOCHb3BzdGFja4eN8J-E4AEAiXNlY3AyNTZrMaECKiOsR7cA48CI3RhAP-7MzV4n02lP_u9IAtIbAL9nnNyDdGNwgrPDg3VkcIKzww,enr:-KG4QNTQ9pImP-bFuqdJ4V9KMsjCvwcfmTn8IW16j7S3q7ncKYqGCttubhgIaVXj8GNE6ZuUzQ9vTQnz_vA4lMfzEL6GAZmV1ZPwgmlkgnY0gmlwhHTKwW2Hb3BzdGFja4eN8J-E4AEAiXNlY3AyNTZrMaEDBIdT_KvQJrp-8cxj1T8gQP8BTPQAFH8TQgBCo4W8FtODdGNwgrPFg3VkcIKzxQ
+            - --p2p.bootnodes=enr:-KG4QFDE2TNMr8MAAejLJAqEiKg76A-Eoz8q8PH1pnOxE57DEfJX6TEkVlOn2EzV4olHRj0MEhjQOS7GGf9BEDEsCamGAZpbnJEkgmlkgnY0gmlwhHTKwOCHb3BzdGFja4eN8J-E4AEAiXNlY3AyNTZrMaEDGqpkSjNyIbOJYkMbUpWqU6_7CAj0cnLVQjiPHK5hjiaDdGNwgrO9g3VkcIKzvQ,enr:-KG4QEyLehw-LmOev-kBAq-VFwJWEeA0VkmEVbACpaWZLECUVH2ExkpQt9ddDCD41vlIBSEoEt9dOckzkjkyf6H5LzeGAZpbnJFRgmlkgnY0gmlwhHTKwW2Hb3BzdGFja4eN8J-E4AEAiXNlY3AyNTZrMaEDewiFgqt4KIb61tcDpGlwb96prGaAz180BlVfXP1DFXODdGNwgrO_g3VkcIKzvw,enr:-KG4QPej_bvdZ7sBbBNN-oNTac13Ku6GygoufbgRhetgc5ogHAMbtkGzp3bJoHM4NXDSjY4Hq0pAExmAX4knHLiPgfWGAZpbnJSXgmlkgnY0gmlwhJBMruuHb3BzdGFja4eN8J-E4AEAiXNlY3AyNTZrMaEC7-pEtmeY_9LCjAoMoV_OU7V6hHVmJa4vgAvtjgw0SiyDdGNwgrPBg3VkcIKzwQ,enr:-KG4QEhQv3g9DkBXancvuM0l0bo5tr2Wr5-N7BVkNLq_ctwlPyL_Pbq6IPkE8saVchMfM0-o7p_nMS8kTv4dpUxE_Z2GAZpbnJTagmlkgnY0gmlwhE4uVcWHb3BzdGFja4eN8J-E4AEAiXNlY3AyNTZrMaEDMu-K5TnawMQWonp8ZrKdT9CBiAOcTVkWY_ZVjLNL43eDdGNwgrPDg3VkcIKzww,enr:-KG4QPmX1ERUUIf5C1fsIluwi1SGUnA0cUWy5uxJ7jcqeJmkNWPfEyOGHAu_OZwh5OKAHikj0mvqEukPaN8ieElNCrKGAZpbnImEgmlkgnY0gmlwhI6EzviHb3BzdGFja4eN8J-E4AEAiXNlY3AyNTZrMaECsCwR2oyAzifZITdZVnDLPYkiIa8ZVxAPuKRSh5T2OPqDdGNwgrPFg3VkcIKzxQ
             - --p2p.listen.tcp=9222
             - --p2p.listen.udp=9222
             - --metrics.enabled
@@ -124,7 +124,11 @@ services:
             - --metrics.port=7300
             - --syncmode=execution-layer
             - --rollup.config=/rollup.json
+            - --rollup.l1-chain-config=/genesis.json
             - --log.level=info
+            - --p2p.discovery.path=/op-node/opnode_discovery_db
+            - --p2p.peerstore.path=/op-node/opnode_peerstore_db
+            - --safedb.path=/state/opnode_safedb_db
         ports:
             - 9545:9545
         volumes:
