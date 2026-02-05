@@ -1,0 +1,146 @@
+volumes:
+  op_geth_data: {}
+  op_node_data: {}
+  jwt_shared: {}
+services:
+  op-init:
+    image: alpine:latest
+    command:
+    - /bin/sh
+    - -c
+    - |
+      set -euo pipefail
+
+      # Create config directory
+      mkdir -p /config
+
+      # Generate JWT secret if it doesn't exist
+      if [ ! -f '/jwt/jwt' ]; then
+        echo 'Generating JWT secret'
+        mkdir -p /jwt
+        # Generate a 32-byte random hex string for JWT secret
+        apk add --no-cache openssl
+        openssl rand -hex 32 > /jwt/jwt
+        chmod 666 /jwt/jwt
+        echo 'JWT secret generated successfully'
+      else
+        echo 'JWT secret already exists, skipping generation'
+      fi
+    volumes:
+    - op_node_data:/op-node
+    - jwt_shared:/jwt
+  op-geth-init:
+    image: golemnetwork/golembase-l3-op-geth:v1.101603.3-5.3-hoodi-h1-2484159c
+    depends_on:
+      op-init:
+        condition: service_completed_successfully
+    entrypoint: []
+    command:
+    - /bin/sh
+    - -c
+    - |
+      set -euo pipefail
+
+      if [ ! -f '/geth/geth' ]; then
+        echo 'Initializing geth data directory with genesis block...'
+
+        # Use genesis file from op-init
+        if ! geth init --state.scheme=hash --datadir='/geth' '/genesis.json'; then
+          echo 'ERROR: Failed to initialize geth with genesis block'
+          exit 1
+        fi
+        echo 'Geth initialized successfully with genesis block'
+      else
+        echo 'Geth data directory already initialized, skipping initialization'
+      fi
+    volumes:
+    - op_geth_data:/geth
+  op-geth:
+    image: golemnetwork/golembase-l3-op-geth:v1.101603.3-5.3-hoodi-h1-2484159c
+    restart: unless-stopped
+    stop_grace_period: 5m
+    depends_on:
+      op-geth-init:
+        condition: service_completed_successfully
+    command:
+    - --networkid=9
+    - --datadir=/geth
+    - --http
+    - --http.corsdomain=*
+    - --http.vhosts=*
+    - --http.addr=0.0.0.0
+    - --http.port=8545
+    - --http.api=admin,debug,eth,txpool,net,engine,web3,golembase,txpool
+    - --ws
+    - --ws.addr=0.0.0.0
+    - --ws.port=8546
+    - --ws.origins=*
+    - --ws.api=admin,debug,eth,txpool,net,engine,web3,golembase,txpool
+    - --syncmode=snap
+    - --authrpc.vhosts=*
+    - --authrpc.addr=0.0.0.0
+    - --authrpc.port=8551
+    - --authrpc.jwtsecret=/jwt/jwt
+    - --usb=false
+    - --state.scheme=hash
+    - --nat=none
+    - --bootnodes=enode://f5d5b3b087d3c8f3a60a876584cb7c3a1949ab6b0f5c0f0cf912b37a7840d8cd115f6a84f0d6a90bfd1678d404999cc3e9840f7c0b7fb6b8b3595acf9831182f@49.13.30.29:30072,enode://513ce93fce002e4f030c349386461e2ddc71179bd35c6fc8965672afb90dfba59d5d8ddfcbdd84276be961ffebb7a9334d782609ceb20f3c1949a3f4535b95fb@91.99.94.10:30074,enode://7fe36d928db61a309ab6d7b4a6faee17480cda547f7f144020212dd92c65a9dd058b6a20bd0b5983e641502f0a4965648611da60a15559b6c3a64822ba72f2cc@195.201.165.105:30076,enode://6e929de6419bc7a75066164bed7249bbf7b86ab2de3e96326a1c6cbbd57d49656a6d854bf498595078b3c8692373e3f910727f30e3b0e64c7692e2288a4ac5e0@91.99.184.248:30078,enode://ef646850b695ae51ffbcfcc3c18365745ec204af08d3b0585e63b60d8132206ddc57fb7adcbc59c3a9718b7467eac31244fe05958e665238a3c447921654b7b7@91.99.157.203:30080
+    - --txpool.disable.non.golembase.transactions=true
+    ports:
+    - 8545:8545
+    - 8546:8546
+    volumes:
+    - op_geth_data:/geth
+    - jwt_shared:/jwt
+  op-node:
+    image: golemnetwork/golembase-l3-op-node:v1.16.2-hoodi-h1-4f4e6359
+    restart: unless-stopped
+    stop_grace_period: 5m
+    depends_on:
+      op-init:
+        condition: service_completed_successfully
+      op-geth:
+        condition: service_started
+    command:
+    - op-node
+    - --altda.enabled=true
+    - --altda.da-server=http://altai:3100
+    - --altda.da-service=true
+    - --l1=https://l2.hoodi.arkiv.network/rpc
+    - --l1.beacon.ignore=true
+    - --l1.rpckind=standard
+    - --l1.trustrpc
+    - --l2=http://op-geth:8551
+    - --l2.enginekind=geth
+    - --l2.jwt-secret=/jwt/jwt
+    - --rpc.addr=0.0.0.0
+    - --rpc.port=9545
+    - --p2p.nat=true
+    - --p2p.ban.peers=false
+    - --p2p.bootnodes=enr:-Jy4QOjge6MWd561WNsQqtzZ_GvPC6rPzuetEH4SviQfIAFIILmAKMFqpyxGRaK3hYI1CatQRpLv3ViyPg59SGfW5rCGAZwuJWcugmlkgnY0gmlwhDENHh2Hb3BzdGFja4IJAIlzZWNwMjU2azGhA3Ot11iGhchVtQr8ES9aWFkfmQ6zODjmX0IGR9-bG7X6g3RjcIJ1eYN1ZHCCdXk,enr:-Jy4QGw3HahivLaklsX6wfPrqTiWPoFDzrL1WdXOiYcyCwjNFmzIIWpncrXD2FFxOGi-d-gwAldBTFcQ5eTDLrECoVSGAZwuJXOvgmlkgnY0gmlwhFtjXgqHb3BzdGFja4IJAIlzZWNwMjU2azGhA_I0E428YomMRuHFbEEttF0BCLnlLpKGqKQJpe07_fyIg3RjcIJ1e4N1ZHCCdXs,enr:-Jy4QIgt7g6xJHSg6d7NItBTrvGUX6o2lPSPoRaqywQ5FlrePafAzywGanXGhpm1KjRdYbItKrK-ZK4EQxS-QfVWCvqGAZwuJWwpgmlkgnY0gmlwhMPJpWmHb3BzdGFja4IJAIlzZWNwMjU2azGhAsa4wu0QvNHhq-wY_wfm_Bncq8FvnrWGVXefGq-y3Fq-g3RjcIJ1fYN1ZHCCdX0,enr:-Jy4QCtybqI04WInVVYnaZYYD-Uwmc1Ep_Ylvj7uFT91iDdwF4Z1KO51HqYygSpt9Q7mwGdcXhX0kPMsCadNB8kYuqCGAZwuJWavgmlkgnY0gmlwhFtjuPiHb3BzdGFja4IJAIlzZWNwMjU2azGhArDcY92XycksBvpS0au1NmAsjItEPm6rFDCXVbqWE18pg3RjcIJ1f4N1ZHCCdX8,enr:-Jy4QLnNNZlfY8gbAbjBfdwcT1ak6N2IYWiynZGgutcxroCPWCClUyXm6XYsfxYciQ2MxofdRz-yYopqJkndgY4hGyeGAZwuJXA3gmlkgnY0gmlwhFtjncuHb3BzdGFja4IJAIlzZWNwMjU2azGhA9CZLxbDnHT8fx32rDSRCNOfsSHXKBpwKJBWGZjOA7nug3RjcIJ1gYN1ZHCCdYE
+    - --p2p.listen.tcp=9222
+    - --p2p.listen.udp=9222
+    - --metrics.enabled
+    - --metrics.addr=0.0.0.0
+    - --metrics.port=7300
+    - --syncmode=execution-layer
+    - --rollup.config=/rollup.json
+    - --rollup.l1-chain-config=/genesis.json
+    - --log.level=info
+    ports:
+    - 9545:9545
+    volumes:
+    - jwt_shared:/jwt
+    - op_node_data:/op-node
+  altai:
+    image: golemnetwork/altai:latest
+    restart: unless-stopped
+    ports:
+    - 3100:3100
+    command:
+    - --addr=0.0.0.0
+    - --port=3100
+    - --backends=http
+    - --http.endpoint=https://altda-staging.gobas.me
+    - --network=h1
+    - --log.level=info
